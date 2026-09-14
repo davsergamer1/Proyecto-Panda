@@ -1,0 +1,3 @@
+﻿pulp
+supabase
+python-dotenv

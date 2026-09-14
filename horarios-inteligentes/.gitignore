@@ -1,0 +1,30 @@
+# === Variables de entorno (credenciales) ===
+.env
+.env.local
+**/.env
+**/.env.local
+
+# === Node.js (frontend y backend) ===
+node_modules/
+**/node_modules/
+dist/
+build/
+.vite/
+*.log
+npm-debug.log*
+
+# === Python (optimizer) ===
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+
+# === Editores / Sistema operativo ===
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
