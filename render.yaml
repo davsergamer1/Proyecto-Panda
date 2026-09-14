@@ -1,0 +1,28 @@
+services:
+  # 1. Backend Service (Node.js + Python PuLP Solver)
+  - type: web
+    name: optihorarios-backend
+    env: node
+    plan: free
+    rootDir: horarios-inteligentes/backend
+    buildCommand: npm install && pip install -r ../optimizer/requirements.txt
+    startCommand: npm start
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+
+  # 2. Frontend Static Site (React + Vite SPA)
+  - type: static
+    name: optihorarios-frontend
+    plan: free
+    rootDir: horarios-inteligentes/frontend
+    buildCommand: npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: optihorarios-backend
+          property: url
