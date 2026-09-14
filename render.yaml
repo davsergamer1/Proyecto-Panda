@@ -14,8 +14,9 @@ services:
         sync: false
 
   # 2. Frontend Static Site (React + Vite SPA)
-  - type: static
+  - type: web
     name: optihorarios-frontend
+    env: static
     plan: free
     rootDir: horarios-inteligentes/frontend
     buildCommand: npm run build
