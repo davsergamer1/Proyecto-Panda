@@ -22,7 +22,4 @@ services:
     staticPublishPath: ./dist
     envVars:
       - key: VITE_API_URL
-        fromService:
-          type: web
-          name: optihorarios-backend
-          property: host
+        sync: false
