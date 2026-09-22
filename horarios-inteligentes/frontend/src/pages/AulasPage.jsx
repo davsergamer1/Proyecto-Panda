@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { api } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 import { Building2, Plus, Edit2, Trash2, Check, X, Search } from "lucide-react";
 
 export default function AulasPage() {
+  const { isAdmin } = useAuth();
   const [aulas, setAulas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -102,10 +104,12 @@ export default function AulasPage() {
             Gestión de espacios educativos, capacidad y equipamiento disponible.
           </p>
         </div>
-        <button className="btn btn-primary" onClick={handleOpenCreate}>
-          <Plus style={{ width: "18px", height: "18px" }} />
-          Nueva Aula
-        </button>
+        {isAdmin && (
+          <button className="btn btn-primary" onClick={handleOpenCreate}>
+            <Plus style={{ width: "18px", height: "18px" }} />
+            Nueva Aula
+          </button>
+        )}
       </div>
 
       {/* KPI Summary Cards */}
@@ -182,7 +186,7 @@ export default function AulasPage() {
                 <th>Cañonera</th>
                 <th>Escritorio Profesor</th>
                 <th>Pizarra</th>
-                <th style={{ textAlign: "right" }}>Acciones</th>
+                {isAdmin && <th style={{ textAlign: "right" }}>Acciones</th>}
               </tr>
             </thead>
             <tbody>
@@ -220,14 +224,16 @@ export default function AulasPage() {
                       <span className="badge badge-danger"><X style={{ width: "12px" }} /> No</span>
                     )}
                   </td>
-                  <td style={{ textAlign: "right" }}>
-                    <button className="btn btn-secondary btn-sm" onClick={() => handleOpenEdit(aula)} style={{ marginRight: "0.5rem" }}>
-                      <Edit2 style={{ width: "14px" }} /> Editar
-                    </button>
-                    <button className="btn btn-danger btn-sm" onClick={() => handleDelete(aula.id)}>
-                      <Trash2 style={{ width: "14px" }} />
-                    </button>
-                  </td>
+                  {isAdmin && (
+                    <td style={{ textAlign: "right" }}>
+                      <button className="btn btn-secondary btn-sm" onClick={() => handleOpenEdit(aula)} style={{ marginRight: "0.5rem" }}>
+                        <Edit2 style={{ width: "14px" }} /> Editar
+                      </button>
+                      <button className="btn btn-danger btn-sm" onClick={() => handleDelete(aula.id)}>
+                        <Trash2 style={{ width: "14px" }} />
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

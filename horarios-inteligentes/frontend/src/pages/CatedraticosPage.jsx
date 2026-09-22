@@ -208,16 +208,18 @@ export default function CatedraticosPage() {
         </div>
         <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
           {isAdmin && (
-            <button className="btn btn-primary" onClick={() => handleOpenCreateUser()}>
-              <Key style={{ width: "18px" }} /> Crear Usuario y Contraseña
-            </button>
+            <>
+              <button className="btn btn-primary" onClick={() => handleOpenCreateUser()}>
+                <Key style={{ width: "18px" }} /> Crear Usuario y Contraseña
+              </button>
+              <button className="btn btn-secondary" onClick={() => handleOpenHabModal()}>
+                <ShieldCheck style={{ width: "18px" }} /> Asignar Curso Habilitado
+              </button>
+              <button className="btn btn-secondary" onClick={handleOpenCreate}>
+                <Plus style={{ width: "18px" }} /> Nuevo Catedrático
+              </button>
+            </>
           )}
-          <button className="btn btn-secondary" onClick={() => handleOpenHabModal()}>
-            <ShieldCheck style={{ width: "18px" }} /> Asignar Curso Habilitado
-          </button>
-          <button className="btn btn-secondary" onClick={handleOpenCreate}>
-            <Plus style={{ width: "18px" }} /> Nuevo Catedrático
-          </button>
         </div>
       </div>
 
@@ -300,7 +302,7 @@ export default function CatedraticosPage() {
                       <th>Carga Académica (Min - Máx)</th>
                       <th>Cursos Habilitados</th>
                       <th>Estado de Acceso</th>
-                      <th style={{ textAlign: "right" }}>Acciones</th>
+                      {isAdmin && <th style={{ textAlign: "right" }}>Acciones</th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -326,19 +328,23 @@ export default function CatedraticosPage() {
                               {misHab.map((h) => (
                                 <span key={h.id} className="badge badge-primary" style={{ display: "inline-flex", alignItems: "center", gap: "0.2rem" }}>
                                   {h.cursos?.nombre || "Curso"}
-                                  <X 
-                                    style={{ width: "12px", cursor: "pointer", marginLeft: "4px" }} 
-                                    onClick={() => handleDeleteHab(h.id)}
-                                  />
+                                  {isAdmin && (
+                                    <X 
+                                      style={{ width: "12px", cursor: "pointer", marginLeft: "4px" }} 
+                                      onClick={() => handleDeleteHab(h.id)}
+                                    />
+                                  )}
                                 </span>
                               ))}
-                              <button 
-                                className="btn btn-secondary btn-sm"
-                                style={{ padding: "0.15rem 0.4rem", fontSize: "0.7rem" }}
-                                onClick={() => handleOpenHabModal(cat.id)}
-                              >
-                                + Agregar
-                              </button>
+                              {isAdmin && (
+                                <button 
+                                  className="btn btn-secondary btn-sm"
+                                  style={{ padding: "0.15rem 0.4rem", fontSize: "0.7rem" }}
+                                  onClick={() => handleOpenHabModal(cat.id)}
+                                >
+                                  + Agregar
+                                </button>
+                              )}
                             </div>
                           </td>
                           <td>
@@ -352,8 +358,8 @@ export default function CatedraticosPage() {
                               </span>
                             )}
                           </td>
-                          <td style={{ textAlign: "right" }}>
-                            {isAdmin && (
+                          {isAdmin && (
+                            <td style={{ textAlign: "right" }}>
                               <button
                                 className="btn btn-secondary btn-sm"
                                 onClick={() => handleOpenCreateUser(cat)}
@@ -362,14 +368,14 @@ export default function CatedraticosPage() {
                               >
                                 <Key style={{ width: "14px", color: "var(--primary)" }} /> Credenciales
                               </button>
-                            )}
-                            <button className="btn btn-secondary btn-sm" onClick={() => handleOpenEdit(cat)} style={{ marginRight: "0.5rem" }}>
-                              <Edit2 style={{ width: "14px" }} /> Editar
-                            </button>
-                            <button className="btn btn-danger btn-sm" onClick={() => handleDelete(cat.id)}>
-                              <Trash2 style={{ width: "14px" }} />
-                            </button>
-                          </td>
+                              <button className="btn btn-secondary btn-sm" onClick={() => handleOpenEdit(cat)} style={{ marginRight: "0.5rem" }}>
+                                <Edit2 style={{ width: "14px" }} /> Editar
+                              </button>
+                              <button className="btn btn-danger btn-sm" onClick={() => handleDelete(cat.id)}>
+                                <Trash2 style={{ width: "14px" }} />
+                              </button>
+                            </td>
+                          )}
                         </tr>
                       );
                     })}

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { api } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 import { Layers, Plus, Edit2, Trash2, X, Users, BookOpen } from "lucide-react";
 
 export default function SeccionesPage() {
+  const { isAdmin } = useAuth();
   const [secciones, setSecciones] = useState([]);
   const [cursos, setCursos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -93,9 +95,11 @@ export default function SeccionesPage() {
             Apertura de secciones por curso y definición de cupos de estudiantes inscritos.
           </p>
         </div>
-        <button className="btn btn-primary" onClick={handleOpenCreate}>
-          <Plus style={{ width: "18px" }} /> Abrir Nueva Sección
-        </button>
+        {isAdmin && (
+          <button className="btn btn-primary" onClick={handleOpenCreate}>
+            <Plus style={{ width: "18px" }} /> Abrir Nueva Sección
+          </button>
+        )}
       </div>
 
       {/* KPI Summary Cards */}
@@ -158,7 +162,7 @@ export default function SeccionesPage() {
                   <th>ID Sección</th>
                   <th>Curso Asociado</th>
                   <th>Cupo Estimado de Alumnos</th>
-                  <th style={{ textAlign: "right" }}>Acciones</th>
+                  {isAdmin && <th style={{ textAlign: "right" }}>Acciones</th>}
                 </tr>
               </thead>
               <tbody>
@@ -181,14 +185,16 @@ export default function SeccionesPage() {
                         <span style={{ fontWeight: "600" }}>{sec.cupo}</span> estudiantes
                       </div>
                     </td>
-                    <td style={{ textAlign: "right" }}>
-                      <button className="btn btn-secondary btn-sm" onClick={() => handleOpenEdit(sec)} style={{ marginRight: "0.5rem" }}>
-                        <Edit2 style={{ width: "14px" }} /> Editar
-                      </button>
-                      <button className="btn btn-danger btn-sm" onClick={() => handleDelete(sec.id)}>
-                        <Trash2 style={{ width: "14px" }} />
-                      </button>
-                    </td>
+                    {isAdmin && (
+                      <td style={{ textAlign: "right" }}>
+                        <button className="btn btn-secondary btn-sm" onClick={() => handleOpenEdit(sec)} style={{ marginRight: "0.5rem" }}>
+                          <Edit2 style={{ width: "14px" }} /> Editar
+                        </button>
+                        <button className="btn btn-danger btn-sm" onClick={() => handleDelete(sec.id)}>
+                          <Trash2 style={{ width: "14px" }} />
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

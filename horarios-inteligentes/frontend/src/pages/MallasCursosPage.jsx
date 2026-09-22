@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { api } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 import { BookOpen, Layers, Plus, Edit2, Trash2, Check, X } from "lucide-react";
 
 export default function MallasCursosPage() {
+  const { isAdmin } = useAuth();
   const [activeSubtab, setActiveSubtab] = useState("cursos");
   const [mallas, setMallas] = useState([]);
   const [cursos, setCursos] = useState([]);
@@ -157,17 +159,19 @@ export default function MallasCursosPage() {
             Definición de mallas curriculares, semestres y asignación de horas semanales.
           </p>
         </div>
-        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-          {activeSubtab === "mallas" ? (
-            <button className="btn btn-primary" onClick={handleOpenCreateMalla}>
-              <Plus style={{ width: "18px" }} /> Nueva Malla / Semestre
-            </button>
-          ) : (
-            <button className="btn btn-primary" onClick={handleOpenCreateCurso}>
-              <Plus style={{ width: "18px" }} /> Nuevo Curso
-            </button>
-          )}
-        </div>
+        {isAdmin && (
+          <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+            {activeSubtab === "mallas" ? (
+              <button className="btn btn-primary" onClick={handleOpenCreateMalla}>
+                <Plus style={{ width: "18px" }} /> Nueva Malla / Semestre
+              </button>
+            ) : (
+              <button className="btn btn-primary" onClick={handleOpenCreateCurso}>
+                <Plus style={{ width: "18px" }} /> Nuevo Curso
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* KPI Summary Cards */}
@@ -253,7 +257,7 @@ export default function MallasCursosPage() {
                     <th>Nombre del Curso</th>
                     <th>Malla / Semestre</th>
                     <th>Horas Semanales</th>
-                    <th style={{ textAlign: "right" }}>Acciones</th>
+                    {isAdmin && <th style={{ textAlign: "right" }}>Acciones</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -270,14 +274,16 @@ export default function MallasCursosPage() {
                           {c.horas_semana} periodos/semana
                         </span>
                       </td>
-                      <td style={{ textAlign: "right" }}>
-                        <button className="btn btn-secondary btn-sm" onClick={() => handleOpenEditCurso(c)} style={{ marginRight: "0.5rem" }}>
-                          <Edit2 style={{ width: "14px" }} /> Editar
-                        </button>
-                        <button className="btn btn-danger btn-sm" onClick={() => handleDeleteCurso(c.id)}>
-                          <Trash2 style={{ width: "14px" }} />
-                        </button>
-                      </td>
+                      {isAdmin && (
+                        <td style={{ textAlign: "right" }}>
+                          <button className="btn btn-secondary btn-sm" onClick={() => handleOpenEditCurso(c)} style={{ marginRight: "0.5rem" }}>
+                            <Edit2 style={{ width: "14px" }} /> Editar
+                          </button>
+                          <button className="btn btn-danger btn-sm" onClick={() => handleDeleteCurso(c.id)}>
+                            <Trash2 style={{ width: "14px" }} />
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -305,7 +311,7 @@ export default function MallasCursosPage() {
                   <tr>
                     <th>Nombre de la Malla / Carrera</th>
                     <th>Semestre</th>
-                    <th style={{ textAlign: "right" }}>Acciones</th>
+                    {isAdmin && <th style={{ textAlign: "right" }}>Acciones</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -317,14 +323,16 @@ export default function MallasCursosPage() {
                           Semestre {m.semestre || 1}
                         </span>
                       </td>
-                      <td style={{ textAlign: "right" }}>
-                        <button className="btn btn-secondary btn-sm" onClick={() => handleOpenEditMalla(m)} style={{ marginRight: "0.5rem" }}>
-                          <Edit2 style={{ width: "14px" }} /> Editar
-                        </button>
-                        <button className="btn btn-danger btn-sm" onClick={() => handleDeleteMalla(m.id)}>
-                          <Trash2 style={{ width: "14px" }} />
-                        </button>
-                      </td>
+                      {isAdmin && (
+                        <td style={{ textAlign: "right" }}>
+                          <button className="btn btn-secondary btn-sm" onClick={() => handleOpenEditMalla(m)} style={{ marginRight: "0.5rem" }}>
+                            <Edit2 style={{ width: "14px" }} /> Editar
+                          </button>
+                          <button className="btn btn-danger btn-sm" onClick={() => handleDeleteMalla(m.id)}>
+                            <Trash2 style={{ width: "14px" }} />
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
