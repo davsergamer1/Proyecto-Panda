@@ -78,6 +78,9 @@ export const api = {
 
   // Horarios Generados & Solver IO
   getHorarios: () => request("/horarios"),
+  createHorario: (data) => request("/horarios", { method: "POST", body: data }),
+  updateHorario: (id, data) => request(`/horarios/${id}`, { method: "PUT", body: data }),
+  deleteHorario: (id) => request(`/horarios/${id}`, { method: "DELETE" }),
   generarHorarios: () => request("/horarios/generar", { method: "POST" }),
   limpiarHorarios: () => request("/horarios", { method: "DELETE" }),
 };

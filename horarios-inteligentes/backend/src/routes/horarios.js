@@ -77,7 +77,58 @@ router.post("/generar", (req, res) => {
   });
 });
 
-// Limpiar horario generado
+// Crear asignación manual de horario (Exclusivo Administrador)
+router.post("/", async (req, res) => {
+  try {
+    const { seccion_id, catedratico_id, aula_id, dia, bloque } = req.body;
+    if (!seccion_id || !catedratico_id || !aula_id || !dia || !bloque) {
+      return res.status(400).json({ error: "Todos los campos (seccion, catedratico, aula, dia, bloque) son requeridos." });
+    }
+
+    const { data, error } = await supabase
+      .from("horarios_generados")
+      .insert([{ seccion_id, catedratico_id, aula_id, dia, bloque }])
+      .select();
+
+    if (error) return res.status(400).json({ error: error.message });
+    res.status(201).json({ exito: true, horario: data[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Editar/Reasignar horario existente (Exclusivo Administrador)
+router.put("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { seccion_id, catedratico_id, aula_id, dia, bloque } = req.body;
+
+    const { data, error } = await supabase
+      .from("horarios_generados")
+      .update({ seccion_id, catedratico_id, aula_id, dia, bloque })
+      .eq("id", id)
+      .select();
+
+    if (error) return res.status(400).json({ error: error.message });
+    res.json({ exito: true, horario: data[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Eliminar bloque individual de horario
+router.delete("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { error } = await supabase.from("horarios_generados").delete().eq("id", id);
+    if (error) return res.status(400).json({ error: error.message });
+    res.json({ exito: true, mensaje: "Bloque de horario eliminado" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Limpiar horario generado completo
 router.delete("/", async (req, res) => {
   const { error } = await supabase
     .from("horarios_generados")
@@ -87,4 +138,4 @@ router.delete("/", async (req, res) => {
   res.status(200).json({ mensaje: "Horario limpiado exitosamente" });
 });
 
-module.exports = router;
+module.exports = router;
