@@ -74,6 +74,7 @@ export const api = {
   login: (data) => request("/auth/login", { method: "POST", body: data }),
   register: (data) => request("/auth/register", { method: "POST", body: data }),
   getUsuarios: () => request("/auth/usuarios"),
+  updateUsuario: (id, data) => request(`/auth/usuarios/${id}`, { method: "PUT", body: data }),
   deleteUsuario: (id) => request(`/auth/usuarios/${id}`, { method: "DELETE" }),
 
   // Horarios Generados & Solver IO

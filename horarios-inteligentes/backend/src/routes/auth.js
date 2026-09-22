@@ -199,6 +199,32 @@ router.delete("/usuarios/:id", async (req, res) => {
   }
 });
 
+// 5. Actualizar Usuario / Modificar Rol o Permisos (Exclusivo SuperAdmin)
+router.put("/usuarios/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nombre, email, rol, catedratico_id, password } = req.body;
+
+    const updates = {};
+    if (nombre) updates.nombre = nombre.trim();
+    if (email) updates.email = email.toLowerCase().trim();
+    if (rol) updates.rol = rol === "admin" ? "admin" : "docente";
+    if (catedratico_id !== undefined) updates.catedratico_id = catedratico_id || null;
+    if (password) updates.password_hash = hashPassword(password);
+
+    const { data, error } = await supabase
+      .from("usuarios")
+      .update(updates)
+      .eq("id", id)
+      .select();
+
+    if (error) return res.status(400).json({ error: error.message });
+    res.json({ exito: true, usuario: data ? data[0] : null });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
 
 

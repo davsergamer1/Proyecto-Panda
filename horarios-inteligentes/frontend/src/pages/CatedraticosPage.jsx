@@ -29,8 +29,9 @@ export default function CatedraticosPage() {
     curso_id: ""
   });
 
-  // Modal Crear Usuario / Credenciales (Admin)
+  // Modal Crear/Editar Usuario / Credenciales (Admin/SuperAdmin)
   const [showUserModal, setShowUserModal] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
   const [userForm, setUserForm] = useState({
     nombre: "",
     email: "",
@@ -152,10 +153,11 @@ export default function CatedraticosPage() {
     }
   };
 
-  // Handlers Creación de Usuario / Credenciales por Admin
+  // Handlers Creación/Edición/Eliminación de Usuario (SuperAdmin)
   const handleOpenCreateUser = (catedratico = null) => {
     setUserSuccessMsg("");
     setErrorMsg("");
+    setEditingUser(null);
     setUserForm({
       nombre: catedratico ? catedratico.nombre : "",
       email: catedratico ? `${catedratico.nombre.toLowerCase().replace(/[^a-z0-9]/g, "")}@umg.edu.gt` : "",
@@ -166,16 +168,39 @@ export default function CatedraticosPage() {
     setShowUserModal(true);
   };
 
+  const handleOpenEditUser = (u) => {
+    setUserSuccessMsg("");
+    setErrorMsg("");
+    setEditingUser(u);
+    setUserForm({
+      nombre: u.nombre || "",
+      email: u.email || "",
+      password: "",
+      rol: u.rol || "docente",
+      catedratico_id: u.catedratico_id || ""
+    });
+    setShowUserModal(true);
+  };
+
   const handleSaveUser = async (e) => {
     e.preventDefault();
-    if (!userForm.nombre || !userForm.email || !userForm.password) {
-      setErrorMsg("Ingrese nombre, email y contraseña inicial.");
+    if (!userForm.nombre || !userForm.email) {
+      setErrorMsg("Ingrese nombre y correo electrónico.");
       return;
     }
     try {
       setErrorMsg("");
-      await api.register(userForm);
-      setUserSuccessMsg("¡Cuenta de usuario creada con éxito!");
+      if (editingUser) {
+        await api.updateUsuario(editingUser.id, userForm);
+        setUserSuccessMsg("¡Permisos y datos de usuario actualizados con éxito!");
+      } else {
+        if (!userForm.password) {
+          setErrorMsg("Ingrese la contraseña inicial para el nuevo usuario.");
+          return;
+        }
+        await api.register(userForm);
+        setUserSuccessMsg("¡Cuenta de usuario creada con éxito!");
+      }
       setTimeout(() => {
         setShowUserModal(false);
         setUserSuccessMsg("");
@@ -186,13 +211,18 @@ export default function CatedraticosPage() {
     }
   };
 
-  const handleDeleteUser = async (id) => {
-    if (!window.confirm("¿Desea eliminar las credenciales de este usuario?")) return;
+  const handleDeleteUser = async (userObj) => {
+    const isTargetAdmin = userObj.rol === "admin";
+    const confirmMsg = isTargetAdmin
+      ? `⚠️ ALERTA SUPERADMIN: ¿Está seguro de ELIMINAR TOTALMENTE la cuenta de Administrador de "${userObj.nombre}" (${userObj.email})? Esta persona perderá todos sus privilegios de gestión.`
+      : `¿Está seguro de ELIMINAR TOTALMENTE la cuenta de "${userObj.nombre}" (${userObj.email})? Se revocará su acceso al sistema.`;
+
+    if (!window.confirm(confirmMsg)) return;
     try {
-      await api.deleteUsuario(id);
+      await api.deleteUsuario(userObj.id);
       loadData();
     } catch (err) {
-      alert("Error al revocar acceso: " + err.message);
+      alert("Error al eliminar la cuenta: " + err.message);
     }
   };
 
@@ -446,8 +476,20 @@ export default function CatedraticosPage() {
                         </td>
                         <td>{catVinculado ? catVinculado.nombre : "-"}</td>
                         <td style={{ textAlign: "right" }}>
-                          <button className="btn btn-danger btn-sm" onClick={() => handleDeleteUser(u.id)}>
-                            <Trash2 style={{ width: "14px" }} /> Revocar
+                          <button
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => handleOpenEditUser(u)}
+                            style={{ marginRight: "0.5rem" }}
+                            title="Modificar rol de acceso o credenciales"
+                          >
+                            <Edit2 style={{ width: "14px" }} /> Rol y Permisos
+                          </button>
+                          <button 
+                            className="btn btn-danger btn-sm" 
+                            onClick={() => handleDeleteUser(u)}
+                            title="Eliminar totalmente la cuenta de usuario"
+                          >
+                            <Trash2 style={{ width: "14px" }} /> Eliminar Cuenta
                           </button>
                         </td>
                       </tr>
@@ -568,13 +610,14 @@ export default function CatedraticosPage() {
         </div>
       )}
 
-      {/* Modal Admin Crear Credenciales de Usuario */}
+      {/* Modal Admin Crear/Editar Credenciales y Permisos de Usuario (SuperAdmin) */}
       {showUserModal && (
         <div className="modal-overlay">
           <div className="modal-content animate-fade-in" style={{ maxWidth: "460px" }}>
             <div className="modal-header">
               <h3 style={{ margin: 0, display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <Key style={{ width: "20px", color: "var(--primary)" }} /> Crear Credenciales de Usuario
+                <ShieldCheck style={{ width: "20px", color: "var(--primary)" }} />
+                {editingUser ? "Modificar Rol y Permisos de Usuario" : "Crear Credenciales de Usuario"}
               </h3>
               <button onClick={() => setShowUserModal(false)} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer" }}>
                 <X style={{ width: "20px" }} />
@@ -618,26 +661,26 @@ export default function CatedraticosPage() {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Contraseña Inicial</label>
+                  <label className="form-label">{editingUser ? "Nueva Contraseña (Opcional)" : "Contraseña Inicial"}</label>
                   <input
                     type="password"
                     className="form-input"
-                    placeholder="••••••••"
+                    placeholder={editingUser ? "Dejar en blanco para mantener la clave actual" : "••••••••"}
                     value={userForm.password}
                     onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
-                    required
+                    required={!editingUser}
                   />
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Rol de Acceso</label>
+                  <label className="form-label">Rol de Acceso / Permisos de Sistema</label>
                   <select
                     className="form-select"
                     value={userForm.rol}
                     onChange={(e) => setUserForm({ ...userForm, rol: e.target.value })}
                   >
-                    <option value="docente">👨‍🏫 Catedrático Docente</option>
-                    <option value="admin">🛡️ Administrador del Sistema</option>
+                    <option value="docente">👨‍🏫 Catedrático Docente (Acceso Solo Lectura)</option>
+                    <option value="admin">🛡️ Administrador / SuperAdmin (Acceso Total)</option>
                   </select>
                 </div>
 
