@@ -70,9 +70,11 @@ export const api = {
   updateDisponibilidad: (id, data) => request(`/disponibilidad/${id}`, { method: "PUT", body: data }),
   deleteDisponibilidad: (id) => request(`/disponibilidad/${id}`, { method: "DELETE" }),
 
-  // Autenticación
+  // Autenticación y Cuentas de Usuario
   login: (data) => request("/auth/login", { method: "POST", body: data }),
   register: (data) => request("/auth/register", { method: "POST", body: data }),
+  getUsuarios: () => request("/auth/usuarios"),
+  deleteUsuario: (id) => request(`/auth/usuarios/${id}`, { method: "DELETE" }),
 
   // Horarios Generados & Solver IO
   getHorarios: () => request("/horarios"),

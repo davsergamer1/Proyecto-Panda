@@ -166,5 +166,39 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// 3. Obtener Listado de Usuarios Registrados (Exclusivo Administrador)
+router.get("/usuarios", async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from("usuarios")
+      .select("id, email, nombre, rol, catedratico_id, created_at")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      if (error.code === "PGRST205") {
+        return res.json([]);
+      }
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json(data || []);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4. Eliminar / Revocar Usuario (Exclusivo Administrador)
+router.delete("/usuarios/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { error } = await supabase.from("usuarios").delete().eq("id", id);
+    if (error) return res.status(400).json({ error: error.message });
+    res.json({ exito: true, mensaje: "Usuario eliminado correctamente" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
+
 
