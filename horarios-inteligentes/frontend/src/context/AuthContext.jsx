@@ -30,6 +30,15 @@ export function AuthProvider({ children }) {
     throw new Error("No se pudo iniciar sesión.");
   };
 
+  const register = async (userData) => {
+    const res = await api.register(userData);
+    if (res && res.usuario) {
+      setUser(res.usuario);
+      return res.usuario;
+    }
+    throw new Error("No se pudo completar el registro.");
+  };
+
   const logout = () => {
     setUser(null);
     localStorage.removeItem("umg_user");
@@ -40,7 +49,7 @@ export function AuthProvider({ children }) {
   const isDocente = role === "docente";
 
   return (
-    <AuthContext.Provider value={{ user, role, isAdmin, isDocente, login, logout, setUser }}>
+    <AuthContext.Provider value={{ user, role, isAdmin, isDocente, login, register, logout, setUser }}>
       {children}
     </AuthContext.Provider>
   );

@@ -72,6 +72,7 @@ export const api = {
 
   // Autenticación
   login: (data) => request("/auth/login", { method: "POST", body: data }),
+  register: (data) => request("/auth/register", { method: "POST", body: data }),
 
   // Horarios Generados & Solver IO
   getHorarios: () => request("/horarios"),

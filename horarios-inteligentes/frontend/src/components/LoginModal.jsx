@@ -1,17 +1,23 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../services/api";
-import { GraduationCap, Shield, Users, Key, LogIn, Check, AlertCircle } from "lucide-react";
+import { GraduationCap, Shield, Users, Key, LogIn, UserPlus, AlertCircle, CheckCircle } from "lucide-react";
 
 export default function LoginModal({ isOpen, onClose }) {
-  const { login } = useAuth();
-  const [activeTab, setActiveTab] = useState("admin"); // 'admin' | 'docente'
+  const { login, register } = useAuth();
+  const [mode, setMode] = useState("login"); // 'login' | 'register'
+  const [roleTab, setRoleTab] = useState("admin"); // 'admin' | 'docente'
+  
+  // Form fields
+  const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [catedraticos, setCatedraticos] = useState([]);
   const [selectedCatId, setSelectedCatId] = useState("");
+  
+  const [catedraticos, setCatedraticos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
 
   useEffect(() => {
     if (isOpen) {
@@ -31,41 +37,38 @@ export default function LoginModal({ isOpen, onClose }) {
     try {
       setLoading(true);
       setErrorMsg("");
+      setSuccessMsg("");
 
-      if (activeTab === "admin") {
-        await login({ email: email || "admin@umg.edu.gt", password, rol: "admin" });
+      if (mode === "register") {
+        if (!nombre.trim()) {
+          throw new Error("Por favor ingrese su nombre completo.");
+        }
+        if (!email.trim() || !password) {
+          throw new Error("Por favor ingrese email y contraseña.");
+        }
+
+        await register({
+          nombre,
+          email,
+          password,
+          rol: roleTab,
+          catedratico_id: roleTab === "docente" ? selectedCatId : null
+        });
+        setSuccessMsg("¡Cuenta creada exitosamente!");
+        setTimeout(() => {
+          onClose && onClose();
+        }, 500);
       } else {
-        await login({ catedratico_id: selectedCatId, email, rol: "docente" });
+        // Login mode
+        if (roleTab === "admin") {
+          await login({ email: email || "admin@umg.edu.gt", password, rol: "admin" });
+        } else {
+          await login({ catedratico_id: selectedCatId, email, password, rol: "docente" });
+        }
+        onClose && onClose();
       }
-
-      onClose && onClose();
     } catch (err) {
-      setErrorMsg(err.message || "Error al iniciar sesión.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDemoAdmin = async () => {
-    try {
-      setLoading(true);
-      await login({ email: "admin@umg.edu.gt", rol: "admin" });
-      onClose && onClose();
-    } catch (err) {
-      setErrorMsg(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDemoDocente = async () => {
-    try {
-      setLoading(true);
-      const catId = selectedCatId || (catedraticos[0]?.id);
-      await login({ catedratico_id: catId, rol: "docente" });
-      onClose && onClose();
-    } catch (err) {
-      setErrorMsg(err.message);
+      setErrorMsg(err.message || "Error al procesar la solicitud.");
     } finally {
       setLoading(false);
     }
@@ -75,170 +78,202 @@ export default function LoginModal({ isOpen, onClose }) {
     <div className="modal-overlay">
       <div className="modal-content animate-fade-in" style={{ maxWidth: "480px" }}>
         {/* Header */}
-        <div className="modal-header" style={{ background: "linear-gradient(135deg, rgba(29, 78, 216, 0.15) 0%, rgba(217, 119, 6, 0.15) 100%)", flexDirection: "column", alignItems: "center", padding: "1.75rem 1.5rem 1.25rem" }}>
+        <div className="modal-header" style={{ background: "linear-gradient(135deg, rgba(29, 78, 216, 0.15) 0%, rgba(217, 119, 6, 0.15) 100%)", flexDirection: "column", alignItems: "center", padding: "1.5rem 1.5rem 1rem" }}>
           <div style={{
-            width: "54px",
-            height: "54px",
-            borderRadius: "16px",
+            width: "52px",
+            height: "52px",
+            borderRadius: "14px",
             background: "linear-gradient(135deg, #1d4ed8 0%, #d97706 100%)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            boxShadow: "0 6px 20px rgba(29, 78, 216, 0.4)",
-            marginBottom: "0.75rem"
+            boxShadow: "0 6px 20px rgba(29, 78, 216, 0.35)",
+            marginBottom: "0.5rem"
           }}>
-            <GraduationCap style={{ width: "30px", height: "30px", color: "#ffffff" }} />
+            <GraduationCap style={{ width: "28px", height: "28px", color: "#ffffff" }} />
           </div>
-          <h3 style={{ margin: 0, fontSize: "1.35rem", textAlign: "center", color: "var(--text-main)" }}>
+          <h3 style={{ margin: 0, fontSize: "1.25rem", textAlign: "center", color: "var(--text-main)" }}>
             OptiHorarios UMG
           </h3>
-          <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "0.2rem" }}>
-            Universidad Mariano Gálvez de Guatemala
+          <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginTop: "0.15rem" }}>
+            Sistema Académico - Universidad Mariano Gálvez
           </span>
         </div>
 
-        {/* Role Selector Tabs */}
-        <div style={{ display: "flex", borderBottom: "1px solid var(--border-color)", background: "var(--table-header-bg)" }}>
+        {/* Mode Selector (Iniciar Sesión vs Registrarse) */}
+        <div style={{ display: "flex", background: "var(--table-header-bg)", borderBottom: "1px solid var(--border-color)", padding: "4px" }}>
           <button
             type="button"
-            onClick={() => setActiveTab("admin")}
+            onClick={() => { setMode("login"); setErrorMsg(""); }}
             style={{
               flex: 1,
-              padding: "0.85rem",
+              padding: "0.5rem",
+              borderRadius: "var(--radius-sm)",
               border: "none",
-              background: activeTab === "admin" ? "var(--bg-card)" : "transparent",
-              color: activeTab === "admin" ? "var(--primary)" : "var(--text-muted)",
-              fontWeight: activeTab === "admin" ? "700" : "500",
-              fontSize: "0.88rem",
+              background: mode === "login" ? "var(--bg-card)" : "transparent",
+              color: mode === "login" ? "var(--primary)" : "var(--text-muted)",
+              fontWeight: mode === "login" ? "700" : "500",
+              fontSize: "0.85rem",
+              cursor: "pointer",
+              boxShadow: mode === "login" ? "0 2px 4px rgba(0,0,0,0.05)" : "none"
+            }}
+          >
+            🔑 Iniciar Sesión
+          </button>
+          <button
+            type="button"
+            onClick={() => { setMode("register"); setErrorMsg(""); }}
+            style={{
+              flex: 1,
+              padding: "0.5rem",
+              borderRadius: "var(--radius-sm)",
+              border: "none",
+              background: mode === "register" ? "var(--bg-card)" : "transparent",
+              color: mode === "register" ? "var(--primary)" : "var(--text-muted)",
+              fontWeight: mode === "register" ? "700" : "500",
+              fontSize: "0.85rem",
+              cursor: "pointer",
+              boxShadow: mode === "register" ? "0 2px 4px rgba(0,0,0,0.05)" : "none"
+            }}
+          >
+            📝 Registrarse
+          </button>
+        </div>
+
+        {/* Role Selector Tabs */}
+        <div style={{ display: "flex", borderBottom: "1px solid var(--border-color)" }}>
+          <button
+            type="button"
+            onClick={() => setRoleTab("admin")}
+            style={{
+              flex: 1,
+              padding: "0.7rem",
+              border: "none",
+              background: roleTab === "admin" ? "var(--bg-card)" : "var(--table-header-bg)",
+              color: roleTab === "admin" ? "var(--primary)" : "var(--text-muted)",
+              fontWeight: roleTab === "admin" ? "700" : "500",
+              fontSize: "0.83rem",
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               gap: "0.4rem",
-              borderBottom: activeTab === "admin" ? "3px solid var(--primary)" : "3px solid transparent"
+              borderBottom: roleTab === "admin" ? "2px solid var(--primary)" : "2px solid transparent"
             }}
           >
-            <Shield style={{ width: "16px" }} />
+            <Shield style={{ width: "15px" }} />
             Administrador
           </button>
           <button
             type="button"
-            onClick={() => setActiveTab("docente")}
+            onClick={() => setRoleTab("docente")}
             style={{
               flex: 1,
-              padding: "0.85rem",
+              padding: "0.7rem",
               border: "none",
-              background: activeTab === "docente" ? "var(--bg-card)" : "transparent",
-              color: activeTab === "docente" ? "var(--accent)" : "var(--text-muted)",
-              fontWeight: activeTab === "docente" ? "700" : "500",
-              fontSize: "0.88rem",
+              background: roleTab === "docente" ? "var(--bg-card)" : "var(--table-header-bg)",
+              color: roleTab === "docente" ? "var(--accent)" : "var(--text-muted)",
+              fontWeight: roleTab === "docente" ? "700" : "500",
+              fontSize: "0.83rem",
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               gap: "0.4rem",
-              borderBottom: activeTab === "docente" ? "3px solid var(--accent)" : "3px solid transparent"
+              borderBottom: roleTab === "docente" ? "2px solid var(--accent)" : "2px solid transparent"
             }}
           >
-            <Users style={{ width: "16px" }} />
+            <Users style={{ width: "15px" }} />
             Catedrático Docente
           </button>
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="modal-body" style={{ padding: "1.5rem" }}>
+          <div className="modal-body" style={{ padding: "1.25rem 1.5rem" }}>
             {errorMsg && (
-              <div style={{ padding: "0.75rem", borderRadius: "var(--radius-sm)", background: "rgba(220, 38, 38, 0.12)", border: "1px solid rgba(220, 38, 38, 0.3)", color: "var(--danger)", fontSize: "0.85rem", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <AlertCircle style={{ width: "18px" }} /> {errorMsg}
+              <div style={{ padding: "0.65rem 0.85rem", borderRadius: "var(--radius-sm)", background: "rgba(220, 38, 38, 0.12)", border: "1px solid rgba(220, 38, 38, 0.3)", color: "var(--danger)", fontSize: "0.82rem", marginBottom: "0.85rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <AlertCircle style={{ width: "16px", flexShrink: 0 }} /> {errorMsg}
               </div>
             )}
 
-            {activeTab === "admin" ? (
-              <>
-                <div className="form-group">
-                  <label className="form-label">Correo Electrónico (Coordinación UMG)</label>
-                  <input
-                    type="email"
-                    className="form-input"
-                    placeholder="admin@umg.edu.gt"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Contraseña</label>
-                  <input
-                    type="password"
-                    className="form-input"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="form-group">
-                  <label className="form-label">Seleccionar Catedrático / Profesor</label>
-                  <select
-                    className="form-select"
-                    value={selectedCatId}
-                    onChange={(e) => setSelectedCatId(e.target.value)}
-                  >
-                    {catedraticos.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        👨‍🏫 {c.nombre}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Contraseña / PIN Docente (Opcional)</label>
-                  <input
-                    type="password"
-                    className="form-input"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
-              </>
+            {successMsg && (
+              <div style={{ padding: "0.65rem 0.85rem", borderRadius: "var(--radius-sm)", background: "rgba(16, 185, 129, 0.12)", border: "1px solid rgba(16, 185, 129, 0.3)", color: "#10b981", fontSize: "0.82rem", marginBottom: "0.85rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <CheckCircle style={{ width: "16px", flexShrink: 0 }} /> {successMsg}
+              </div>
             )}
 
-            {/* Quick Demo Access Buttons */}
-            <div style={{ marginTop: "1.25rem", padding: "1rem", background: "var(--table-header-bg)", borderRadius: "var(--radius-md)", border: "1px solid var(--border-color)" }}>
-              <div style={{ fontSize: "0.78rem", fontWeight: "700", color: "var(--text-muted)", marginBottom: "0.6rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                ⚡ Acceso Rápido de Prueba (1-Clic)
+            {mode === "register" && (
+              <div className="form-group" style={{ marginBottom: "0.85rem" }}>
+                <label className="form-label" style={{ fontSize: "0.8rem", marginBottom: "0.25rem" }}>Nombre Completo</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Ej. Ing. Carlos Mendoza"
+                  value={nombre}
+                  onChange={(e) => setNombre(e.target.value)}
+                  required
+                />
               </div>
-              <div style={{ display: "flex", gap: "0.5rem" }}>
-                <button
-                  type="button"
-                  onClick={handleDemoAdmin}
-                  disabled={loading}
-                  className="btn btn-secondary btn-sm"
-                  style={{ flex: 1, fontSize: "0.78rem", justifyContent: "center" }}
-                >
-                  <Shield style={{ width: "14px", color: "var(--primary)" }} />
-                  Demo Admin
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDemoDocente}
-                  disabled={loading}
-                  className="btn btn-secondary btn-sm"
-                  style={{ flex: 1, fontSize: "0.78rem", justifyContent: "center" }}
-                >
-                  <Users style={{ width: "14px", color: "var(--accent)" }} />
-                  Demo Docente
-                </button>
-              </div>
+            )}
+
+            <div className="form-group" style={{ marginBottom: "0.85rem" }}>
+              <label className="form-label" style={{ fontSize: "0.8rem", marginBottom: "0.25rem" }}>
+                Correo Electrónico {roleTab === "admin" ? "(Administración UMG)" : "(Docente)"}
+              </label>
+              <input
+                type="email"
+                className="form-input"
+                placeholder={roleTab === "admin" ? "admin@umg.edu.gt" : "catedratico@umg.edu.gt"}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required={mode === "register" || roleTab === "admin"}
+              />
             </div>
+
+            <div className="form-group" style={{ marginBottom: "0.85rem" }}>
+              <label className="form-label" style={{ fontSize: "0.8rem", marginBottom: "0.25rem" }}>Contraseña</label>
+              <input
+                type="password"
+                className="form-input"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required={mode === "register"}
+              />
+            </div>
+
+            {roleTab === "docente" && (
+              <div className="form-group" style={{ marginBottom: "0.85rem" }}>
+                <label className="form-label" style={{ fontSize: "0.8rem", marginBottom: "0.25rem" }}>Vincular a Catedrático Registrado</label>
+                <select
+                  className="form-select"
+                  value={selectedCatId}
+                  onChange={(e) => setSelectedCatId(e.target.value)}
+                >
+                  <option value="">-- Seleccionar Catedrático --</option>
+                  {catedraticos.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      👨‍🏫 {c.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
-          <div className="modal-footer">
-            <button type="submit" className="btn btn-primary" style={{ width: "100%" }} disabled={loading}>
-              <LogIn style={{ width: "18px" }} />
-              {loading ? "Iniciando Sesión..." : `Ingresar como ${activeTab === "admin" ? "Administrador" : "Docente"}`}
+          <div className="modal-footer" style={{ padding: "1rem 1.5rem" }}>
+            <button type="submit" className="btn btn-primary" style={{ width: "100%", justifyContent: "center" }} disabled={loading}>
+              {mode === "register" ? (
+                <>
+                  <UserPlus style={{ width: "18px" }} />
+                  {loading ? "Registrando..." : `Crear Cuenta de ${roleTab === "admin" ? "Administrador" : "Docente"}`}
+                </>
+              ) : (
+                <>
+                  <LogIn style={{ width: "18px" }} />
+                  {loading ? "Ingresando..." : `Iniciar Sesión (${roleTab === "admin" ? "Admin" : "Docente"})`}
+                </>
+              )}
             </button>
           </div>
         </form>
@@ -246,3 +281,4 @@ export default function LoginModal({ isOpen, onClose }) {
     </div>
   );
 }
+
