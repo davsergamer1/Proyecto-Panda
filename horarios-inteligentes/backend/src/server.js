@@ -16,6 +16,7 @@ const seccionesRouter = require("./routes/secciones");
 const disponibilidadRouter = require("./routes/disponibilidad");
 const authRouter = require("./routes/auth");
 const catedraticosCursosRouter = require("./routes/catedraticosCursos");
+const horariosRouter = require("./routes/horarios");
 
 app.use("/auth", authRouter);
 app.use("/catedraticos-cursos", catedraticosCursosRouter);
