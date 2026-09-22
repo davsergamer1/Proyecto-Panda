@@ -49,7 +49,7 @@ export default function CatedraticosPage() {
         api.getCatedraticos(),
         api.getCursos(),
         api.getCatedraticosCursos(),
-        api.getUsuarios().catch(() => [])
+        isAdmin ? api.getUsuarios().catch(() => []) : Promise.resolve([])
       ]);
       setCatedraticos(catData || []);
       setCursos(curData || []);
@@ -64,7 +64,7 @@ export default function CatedraticosPage() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [isAdmin]);
 
   // Handlers Catedrático
   const handleOpenCreate = () => {
@@ -201,9 +201,14 @@ export default function CatedraticosPage() {
       {/* Header Bar */}
       <div className="header-responsive" style={{ marginBottom: "1.5rem" }}>
         <div>
-          <h1 style={{ fontSize: "1.75rem", margin: 0 }}>Docentes y Gestión de Cuentas</h1>
+          <h1 style={{ fontSize: "1.75rem", margin: 0 }}>
+            {isAdmin ? "Docentes y Gestión de Cuentas" : "Cuerpo Docente y Cargas Académicas"}
+          </h1>
           <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
-            Administración del cuerpo docente, restricción de carga académica y asignación de credenciales de acceso.
+            {isAdmin 
+              ? "Administración del cuerpo docente, restricción de carga académica y asignación de credenciales de acceso."
+              : "Consulta del cuerpo docente registrado, rangos de carga lectiva y asignaturas habilitadas."
+            }
           </p>
         </div>
         <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
@@ -301,7 +306,7 @@ export default function CatedraticosPage() {
                       <th>Catedrático / Profesor</th>
                       <th>Carga Académica (Min - Máx)</th>
                       <th>Cursos Habilitados</th>
-                      <th>Estado de Acceso</th>
+                      {isAdmin && <th>Estado de Acceso</th>}
                       {isAdmin && <th style={{ textAlign: "right" }}>Acciones</th>}
                     </tr>
                   </thead>
@@ -347,17 +352,19 @@ export default function CatedraticosPage() {
                               )}
                             </div>
                           </td>
-                          <td>
-                            {tieneUsuario ? (
-                              <span className="badge badge-success" style={{ fontSize: "0.75rem", display: "inline-flex", alignItems: "center", gap: "0.25rem" }}>
-                                <Key style={{ width: "12px" }} /> {tieneUsuario.email}
-                              </span>
-                            ) : (
-                              <span className="badge" style={{ background: "rgba(107, 114, 128, 0.15)", color: "var(--text-muted)", fontSize: "0.75rem" }}>
-                                Sin Cuenta
-                              </span>
-                            )}
-                          </td>
+                          {isAdmin && (
+                            <td>
+                              {tieneUsuario ? (
+                                <span className="badge badge-success" style={{ fontSize: "0.75rem", display: "inline-flex", alignItems: "center", gap: "0.25rem" }}>
+                                  <Key style={{ width: "12px" }} /> {tieneUsuario.email}
+                                </span>
+                              ) : (
+                                <span className="badge" style={{ background: "rgba(107, 114, 128, 0.15)", color: "var(--text-muted)", fontSize: "0.75rem" }}>
+                                  Sin Cuenta
+                                </span>
+                              )}
+                            </td>
+                          )}
                           {isAdmin && (
                             <td style={{ textAlign: "right" }}>
                               <button
