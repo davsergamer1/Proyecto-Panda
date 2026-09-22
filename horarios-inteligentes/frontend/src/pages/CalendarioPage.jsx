@@ -43,6 +43,8 @@ const normBloque = (b) => {
   return str;
 };
 
+import { useAuth } from "../context/AuthContext";
+
 // Generador de colores de cursos adaptables a Modo Claro y Modo Oscuro
 const COLORS = [
   { bg: "rgba(29, 78, 216, 0.12)", border: "#2563eb", text: "var(--text-main)" },
@@ -54,6 +56,7 @@ const COLORS = [
 ];
 
 export default function CalendarioPage({ theme, toggleTheme }) {
+  const { user, isAdmin, isDocente } = useAuth();
   const [horarios, setHorarios] = useState([]);
   const [aulas, setAulas] = useState([]);
   const [catedraticos, setCatedraticos] = useState([]);
@@ -65,6 +68,12 @@ export default function CalendarioPage({ theme, toggleTheme }) {
   // Filters
   const [filterAula, setFilterAula] = useState("");
   const [filterCat, setFilterCat] = useState("");
+
+  useEffect(() => {
+    if (isDocente && user?.catedratico_id) {
+      setFilterCat(user.catedratico_id);
+    }
+  }, [isDocente, user]);
 
   const loadData = async () => {
     try {
@@ -158,40 +167,48 @@ export default function CalendarioPage({ theme, toggleTheme }) {
             </button>
           )}
 
-          <button 
-            className="btn btn-accent" 
-            onClick={() => setShowQuickModal(true)}
-            style={{ padding: "0.6rem 1.25rem", fontSize: "0.95rem" }}
-          >
-            <Zap style={{ width: "18px" }} /> ⚡ Creación Rápida
-          </button>
+          {isDocente ? (
+            <div style={{ padding: "0.5rem 1rem", borderRadius: "var(--radius-md)", background: "rgba(217, 119, 6, 0.15)", border: "1px solid rgba(217, 119, 6, 0.3)", color: "var(--accent)", fontWeight: "700", fontSize: "0.88rem" }}>
+              👨‍🏫 Mi Horario Catedrático Personal ({user?.nombre})
+            </div>
+          ) : (
+            <>
+              <button 
+                className="btn btn-accent" 
+                onClick={() => setShowQuickModal(true)}
+                style={{ padding: "0.6rem 1.25rem", fontSize: "0.95rem" }}
+              >
+                <Zap style={{ width: "18px" }} /> ⚡ Creación Rápida
+              </button>
 
-          <button 
-            className="btn btn-secondary" 
-            onClick={handleClearSchedule}
-            disabled={runningSolver}
-          >
-            <Trash2 style={{ width: "18px" }} /> Limpiar Horario
-          </button>
-          
-          <button 
-            className="btn btn-primary" 
-            onClick={handleRunOptimizer}
-            disabled={runningSolver}
-            style={{ padding: "0.6rem 1.5rem", fontSize: "0.95rem" }}
-          >
-            {runningSolver ? (
-              <>
-                <RefreshCw className="spin" style={{ width: "18px", animation: "spin 1s linear infinite" }} />
-                Ejecutando Modelo PuLP...
-              </>
-            ) : (
-              <>
-                <Play style={{ width: "18px", fill: "currentColor" }} />
-                Ejecutar Optimización I.O.
-              </>
-            )}
-          </button>
+              <button 
+                className="btn btn-secondary" 
+                onClick={handleClearSchedule}
+                disabled={runningSolver}
+              >
+                <Trash2 style={{ width: "18px" }} /> Limpiar Horario
+              </button>
+              
+              <button 
+                className="btn btn-primary" 
+                onClick={handleRunOptimizer}
+                disabled={runningSolver}
+                style={{ padding: "0.6rem 1.5rem", fontSize: "0.95rem" }}
+              >
+                {runningSolver ? (
+                  <>
+                    <RefreshCw className="spin" style={{ width: "18px", animation: "spin 1s linear infinite" }} />
+                    Ejecutando Modelo PuLP...
+                  </>
+                ) : (
+                  <>
+                    <Play style={{ width: "18px", fill: "currentColor" }} />
+                    Ejecutar Optimización I.O.
+                  </>
+                )}
+              </button>
+            </>
+          )}
         </div>
       </div>
 

@@ -70,6 +70,9 @@ export const api = {
   updateDisponibilidad: (id, data) => request(`/disponibilidad/${id}`, { method: "PUT", body: data }),
   deleteDisponibilidad: (id) => request(`/disponibilidad/${id}`, { method: "DELETE" }),
 
+  // Autenticación
+  login: (data) => request("/auth/login", { method: "POST", body: data }),
+
   // Horarios Generados & Solver IO
   getHorarios: () => request("/horarios"),
   generarHorarios: () => request("/horarios/generar", { method: "POST" }),

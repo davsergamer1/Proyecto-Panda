@@ -29,7 +29,10 @@ const normBloque = (b) => {
   return str;
 };
 
+import { useAuth } from "../context/AuthContext";
+
 export default function DisponibilidadPage() {
+  const { user, isDocente } = useAuth();
   const [catedraticos, setCatedraticos] = useState([]);
   const [selectedCatId, setSelectedCatId] = useState("");
   const [disponibilidades, setDisponibilidades] = useState([]);
@@ -44,7 +47,10 @@ export default function DisponibilidadPage() {
       ]);
       setCatedraticos(catData || []);
       setDisponibilidades(dispData || []);
-      if (catData && catData.length > 0 && !selectedCatId) {
+      
+      if (isDocente && user?.catedratico_id) {
+        setSelectedCatId(user.catedratico_id);
+      } else if (catData && catData.length > 0 && !selectedCatId) {
         setSelectedCatId(catData[0].id);
       }
     } catch (err) {
@@ -168,6 +174,7 @@ export default function DisponibilidadPage() {
           className="form-select"
           style={{ minWidth: "200px", flex: 1 }}
           value={selectedCatId}
+          disabled={isDocente}
           onChange={(e) => setSelectedCatId(e.target.value)}
         >
           {catedraticos.map((c) => (

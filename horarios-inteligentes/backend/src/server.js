@@ -14,9 +14,10 @@ const catedraticosRouter = require("./routes/catedraticos");
 const cursosRouter = require("./routes/cursos");
 const seccionesRouter = require("./routes/secciones");
 const disponibilidadRouter = require("./routes/disponibilidad");
-const horariosRouter = require("./routes/horarios");
+const authRouter = require("./routes/auth");
 const catedraticosCursosRouter = require("./routes/catedraticosCursos");
 
+app.use("/auth", authRouter);
 app.use("/catedraticos-cursos", catedraticosCursosRouter);
 app.use("/aulas", aulasRouter);
 app.use("/mallas", mallasRouter);

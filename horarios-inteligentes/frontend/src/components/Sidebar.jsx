@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useAuth } from "../context/AuthContext";
 import { 
   Calendar, 
   Building2, 
@@ -10,11 +11,15 @@ import {
   Sun,
   Moon,
   Menu,
-  X
+  X,
+  Shield,
+  LogOut,
+  UserCheck
 } from "lucide-react";
 
-export default function Sidebar({ activeTab, setActiveTab, theme, toggleTheme }) {
+export default function Sidebar({ activeTab, setActiveTab, theme, toggleTheme, onOpenLogin }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user, isAdmin, isDocente, logout } = useAuth();
 
   const menuItems = [
     { id: "calendario", label: "Calendario & Solver I.O.", icon: Calendar },
@@ -127,7 +132,7 @@ export default function Sidebar({ activeTab, setActiveTab, theme, toggleTheme })
           display: "flex",
           flexDirection: "column",
           padding: "1.5rem 1rem",
-          gap: "1.5rem",
+          gap: "1.25rem",
           zIndex: 100,
           transition: "background-color 0.25s ease, border-color 0.25s ease"
         }}
@@ -169,9 +174,68 @@ export default function Sidebar({ activeTab, setActiveTab, theme, toggleTheme })
           </div>
         </div>
 
+        {/* User Session Profile Card */}
+        <div style={{
+          padding: "0.85rem",
+          borderRadius: "var(--radius-md)",
+          background: isAdmin ? "rgba(29, 78, 216, 0.12)" : "rgba(217, 119, 6, 0.12)",
+          border: `1px solid ${isAdmin ? "rgba(29, 78, 216, 0.3)" : "rgba(217, 119, 6, 0.3)"}`,
+          display: "flex",
+          flexDirection: "column",
+          gap: "0.5rem"
+        }}>
+          {user ? (
+            <>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ 
+                  fontSize: "0.72rem", 
+                  fontWeight: "800", 
+                  textTransform: "uppercase", 
+                  letterSpacing: "0.05em",
+                  color: isAdmin ? "var(--primary)" : "var(--accent)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.3rem"
+                }}>
+                  {isAdmin ? <Shield style={{ width: "13px" }} /> : <UserCheck style={{ width: "13px" }} />}
+                  {isAdmin ? "Administrador" : "Catedrático Docente"}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="btn btn-secondary btn-sm"
+                  style={{ padding: "0.2rem 0.4rem", fontSize: "0.7rem" }}
+                  title="Cerrar Sesión"
+                >
+                  <LogOut style={{ width: "12px" }} /> Salir
+                </button>
+              </div>
+
+              <div style={{ fontSize: "0.9rem", fontWeight: "700", color: "var(--text-main)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {user.nombre}
+              </div>
+            </>
+          ) : (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", fontWeight: "600" }}>
+                Sin Sesión Iniciada
+              </span>
+              <button
+                type="button"
+                onClick={onOpenLogin}
+                className="btn btn-primary btn-sm"
+                style={{ fontSize: "0.75rem", padding: "0.3rem 0.6rem" }}
+              >
+                Ingresar
+              </button>
+            </div>
+          )}
+        </div>
+
         {/* Theme Switcher Card in Sidebar */}
         <div style={{
-          padding: "0.65rem 0.85rem",
+          padding: "0.6rem 0.85rem",
           borderRadius: "var(--radius-md)",
           background: "var(--table-header-bg)",
           border: "1px solid var(--border-color)",
@@ -233,7 +297,7 @@ export default function Sidebar({ activeTab, setActiveTab, theme, toggleTheme })
         </nav>
 
         {/* Footer Info Badge */}
-        <div style={{ marginTop: "auto", padding: "0.9rem", borderRadius: "var(--radius-md)", background: "var(--table-header-bg)", border: "1px solid var(--border-color)" }}>
+        <div style={{ marginTop: "auto", padding: "0.85rem", borderRadius: "var(--radius-md)", background: "var(--table-header-bg)", border: "1px solid var(--border-color)" }}>
           <div style={{ fontSize: "0.75rem", color: "var(--text-main)", fontWeight: "700", marginBottom: "0.2rem" }}>
             Universidad Mariano Gálvez
           </div>
