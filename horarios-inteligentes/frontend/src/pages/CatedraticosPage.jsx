@@ -110,7 +110,7 @@ export default function CatedraticosPage() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("¿Desea eliminar este catedrático?")) return;
+    if (!window.confirm("¿Está seguro de ELIMINAR ESTE CATEDRÁTICO? Esta acción revocará y eliminará también su cuenta de usuario y accesos al sistema.")) return;
     try {
       await api.deleteCatedratico(id);
       loadData();

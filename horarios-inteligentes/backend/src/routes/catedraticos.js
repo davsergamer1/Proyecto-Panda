@@ -32,8 +32,15 @@ router.put("/:id", async (req, res) => {
 
 router.delete("/:id", async (req, res) => {
   try {
-    await supabase.from("horarios_generados").delete().eq("catedratico_id", req.params.id);
-    const { error } = await supabase.from("catedraticos").delete().eq("id", req.params.id);
+    const catId = req.params.id;
+    // 1. Eliminar cuentas de usuarios vinculadas
+    await supabase.from("usuarios").delete().eq("catedratico_id", catId);
+    // 2. Eliminar horarios, habilitaciones y disponibilidad
+    await supabase.from("horarios_generados").delete().eq("catedratico_id", catId);
+    await supabase.from("catedraticos_cursos").delete().eq("catedratico_id", catId);
+    await supabase.from("disponibilidad").delete().eq("catedratico_id", catId);
+    // 3. Eliminar catedrático
+    const { error } = await supabase.from("catedraticos").delete().eq("id", catId);
     if (error) return res.status(500).json({ error: error.message });
     res.status(204).send();
   } catch (err) {

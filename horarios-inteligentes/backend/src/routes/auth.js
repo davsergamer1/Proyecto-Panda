@@ -122,44 +122,22 @@ router.post("/login", async (req, res) => {
     }
 
     // B. Fallback / Acceso Administrador por defecto (admin@umg.edu.gt / 1234)
-    if (rol === "admin" || cleanEmail.includes("admin") || cleanEmail === "admin@umg.edu.gt") {
-      return res.json({
-        exito: true,
-        usuario: {
-          id: "admin-umg-001",
-          nombre: "Administrador UMG",
-          email: cleanEmail || "admin@umg.edu.gt",
-          rol: "admin",
-          catedratico_id: null
-        }
-      });
-    }
-
-    // C. Autenticación contra la tabla de catedráticos reales de Supabase
-    let targetCatId = catedratico_id;
-    if (!targetCatId && cleanEmail) {
-      const { data: cats } = await supabase.from("catedraticos").select("*");
-      const match = (cats || []).find(c => cleanEmail.includes(c.nombre.toLowerCase().split(" ")[0]));
-      if (match) targetCatId = match.id;
-    }
-
-    if (targetCatId) {
-      const { data: cat } = await supabase.from("catedraticos").select("*").eq("id", targetCatId).single();
-      if (cat) {
+    if (rol === "admin" || cleanEmail === "admin@umg.edu.gt") {
+      if (password === "1234" || password === "admin123") {
         return res.json({
           exito: true,
           usuario: {
-            id: cat.id,
-            nombre: cat.nombre,
-            email: cleanEmail || `${cat.nombre.toLowerCase().replace(/[^a-z0-9]/g, "")}@umg.edu.gt`,
-            rol: "docente",
-            catedratico_id: cat.id
+            id: "admin-umg-001",
+            nombre: "Administrador UMG",
+            email: cleanEmail || "admin@umg.edu.gt",
+            rol: "admin",
+            catedratico_id: null
           }
         });
       }
     }
 
-    return res.status(401).json({ error: "Credenciales de usuario no encontradas." });
+    return res.status(401).json({ error: "Usuario o contraseña incorrectos, o la cuenta ha sido eliminada." });
 
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -187,13 +165,33 @@ router.get("/usuarios", async (req, res) => {
   }
 });
 
-// 4. Eliminar / Revocar Usuario (Exclusivo Administrador)
+// 4. Eliminar / Revocar Usuario Totalmente (Exclusivo Administrador)
 router.delete("/usuarios/:id", async (req, res) => {
   try {
     const { id } = req.params;
+    
+    // Obtener información del usuario a eliminar antes de borrarlo
+    const { data: userTarget } = await supabase
+      .from("usuarios")
+      .select("catedratico_id")
+      .eq("id", id)
+      .maybeSingle();
+
+    const catId = userTarget?.catedratico_id;
+
+    // Eliminar registro de la tabla usuarios
     const { error } = await supabase.from("usuarios").delete().eq("id", id);
     if (error) return res.status(400).json({ error: error.message });
-    res.json({ exito: true, mensaje: "Usuario eliminado correctamente" });
+
+    // Si estaba vinculado a un catedrático, eliminar también el catedrático y sus horarios
+    if (catId) {
+      await supabase.from("horarios_generados").delete().eq("catedratico_id", catId);
+      await supabase.from("catedraticos_cursos").delete().eq("catedratico_id", catId);
+      await supabase.from("disponibilidad").delete().eq("catedratico_id", catId);
+      await supabase.from("catedraticos").delete().eq("id", catId);
+    }
+
+    res.json({ exito: true, mensaje: "Usuario y perfil docente eliminados totalmente." });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
