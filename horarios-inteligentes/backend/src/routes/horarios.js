@@ -61,9 +61,20 @@ router.post("/generar", (req, res) => {
 
     if (error || combinedOutput.includes("[ERROR]")) {
       console.error("Error/Infactibilidad en optimizador:", combinedOutput);
+
+      const diagLines = combinedOutput
+        .split("\n")
+        .filter(line => line.includes("[DIAGNÓSTICO]") || line.includes("[DIAGNOSTICO]") || line.includes("[ERROR]"))
+        .map(line => line.replace(/\[DIAGNÓSTICO\]|\[DIAGNOSTICO\]|\[ERROR\]/g, "").trim())
+        .filter(Boolean);
+
+      const mainErrorMsg = diagLines.length > 0 
+        ? `No se pudo optimizar: ${diagLines.join(" | ")}` 
+        : "El motor de optimización no pudo encontrar un horario óptimo.";
+
       return res.status(400).json({ 
         exito: false, 
-        error: "El motor de optimización no pudo encontrar un horario óptimo.", 
+        error: mainErrorMsg, 
         detalle: combinedOutput || error?.message 
       });
     }

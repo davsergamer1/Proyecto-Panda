@@ -5,6 +5,10 @@ if exist "..\..\.venv\Scripts\python.exe" (
     "..\..\.venv\Scripts\python.exe" solver.py
 ) else if exist "venv\Scripts\python.exe" (
     "venv\Scripts\python.exe" solver.py
+) else if exist "%LOCALAPPDATA%\Python\bin\python.exe" (
+    "%LOCALAPPDATA%\Python\bin\python.exe" solver.py
+) else if exist "%USERPROFILE%\AppData\Local\Python\bin\python.exe" (
+    "%USERPROFILE%\AppData\Local\Python\bin\python.exe" solver.py
 ) else (
-    python solver.py
+    py -3 solver.py || python solver.py
 )

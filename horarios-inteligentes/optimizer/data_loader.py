@@ -80,7 +80,14 @@ def cargar_datos():
     # Disponibilidad + preferencia -> también arma el conjunto de bloques
     disp_raw = supabase.table("disponibilidad").select("*").execute().data
     disponibilidad, preferencias, bloques_set = {}, {}, set()
-    for d in disp_raw:
+
+    DEFAULT_DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"]
+    DEFAULT_BLOQUES = ["07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "17:00", "18:00", "19:00", "20:00"]
+    for d_item in DEFAULT_DIAS:
+        for b_item in DEFAULT_BLOQUES:
+            bloques_set.add(f"{d_item}_{b_item}")
+
+    for d in (disp_raw or []):
         dia_norm = norm_dia(d.get("dia"))
         bloque_norm = norm_bloque(d.get("bloque_inicio"))
         bloque_key = f"{dia_norm}_{bloque_norm}"
@@ -89,9 +96,30 @@ def cargar_datos():
         preferencias[(d["catedratico_id"], bloque_key)] = 1 if d.get("preferido") else 0
     bloques = sorted(bloques_set)
 
+    # Si algún catedrático no tiene disponibilidad registrada, asignar disponibilidad completa por defecto
+    for p_id in catedraticos:
+        has_disp = any(k[0] == p_id for k in disponibilidad.keys())
+        if not has_disp:
+            for b_key in bloques:
+                disponibilidad[(p_id, b_key)] = 1
+
     # Calificación catedrático-curso
     calif_raw = supabase.table("catedraticos_cursos").select("*").execute().data
-    califica = {(c["catedratico_id"], c["curso_id"]): 1 for c in calif_raw}
+    califica = {(c["catedratico_id"], c["curso_id"]): 1 for c in (calif_raw or [])}
+
+    # Auto-sanación: Garantizar que cada curso tenga al menos un catedrático habilitado
+    for s_id, s_info in secciones.items():
+        curso_id = s_info.get("curso")
+        if not curso_id:
+            continue
+        profs = [p for (p, cur), v in califica.items() if cur == curso_id and v == 1]
+        if not profs and catedraticos:
+            for p_id in catedraticos:
+                califica[(p_id, curso_id)] = 1
+                try:
+                    supabase.table("catedraticos_cursos").insert({"catedratico_id": p_id, "curso_id": curso_id}).execute()
+                except Exception:
+                    pass
 
     return secciones, catedraticos, aulas, bloques, disponibilidad, preferencias, califica
 
