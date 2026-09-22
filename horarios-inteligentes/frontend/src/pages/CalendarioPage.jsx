@@ -87,7 +87,14 @@ export default function CalendarioPage({ theme, toggleTheme }) {
   const [modalError, setModalError] = useState("");
 
   // Encontrar ID del catedrático autenticado
-  const myCatId = user?.catedratico_id || (catedraticos.find(c => user?.nombre && c.nombre.toLowerCase().includes(user.nombre.toLowerCase().split(" ")[0]))?.id);
+  const myCatId = user?.catedratico_id || (catedraticos.find(c => {
+    if (!c.nombre) return false;
+    const catLower = c.nombre.toLowerCase();
+    const userNombre = user?.nombre?.toLowerCase() || "";
+    const userEmailPrefix = user?.email?.split("@")[0]?.toLowerCase() || "";
+    const firstWord = userNombre.split(" ")[0];
+    return (firstWord && catLower.includes(firstWord)) || (userEmailPrefix && catLower.includes(userEmailPrefix));
+  })?.id);
 
   const loadData = async () => {
     try {
@@ -199,7 +206,8 @@ export default function CalendarioPage({ theme, toggleTheme }) {
   // Filtered horarios
   const filteredHorarios = horarios.filter((h) => {
     if (isDocente && docenteViewMode === "personal") {
-      if (myCatId && String(h.catedratico_id) !== String(myCatId)) return false;
+      if (!myCatId) return false; // Evita fugas si el docente no está vinculado a un catedrático
+      if (String(h.catedratico_id) !== String(myCatId)) return false;
     }
     if (filterAula && String(h.aula_id) !== String(filterAula)) return false;
     if (filterCat && String(h.catedratico_id) !== String(filterCat)) return false;
@@ -314,9 +322,9 @@ export default function CalendarioPage({ theme, toggleTheme }) {
             <BookOpen style={{ width: "24px" }} />
           </div>
           <div>
-            <div className="kpi-label">Asignaciones Generadas</div>
-            <div className="kpi-value">{horarios.length}</div>
-            <div className="kpi-subtext">Bloques de clase programados</div>
+            <div className="kpi-label">{isDocente && docenteViewMode === "personal" ? "Tus Clases Programadas" : "Asignaciones Generadas"}</div>
+            <div className="kpi-value">{filteredHorarios.length}</div>
+            <div className="kpi-subtext">{isDocente && docenteViewMode === "personal" ? "Bloques asignados a tu perfil" : "Bloques de clase programados"}</div>
           </div>
         </div>
 
@@ -327,7 +335,7 @@ export default function CalendarioPage({ theme, toggleTheme }) {
           <div>
             <div className="kpi-label">Aulas en Uso</div>
             <div className="kpi-value">
-              {new Set(horarios.map(h => h.aula_id)).size} / {aulas.length}
+              {new Set(filteredHorarios.map(h => h.aula_id)).size} / {aulas.length}
             </div>
             <div className="kpi-subtext">Capacidad de infraestructura activa</div>
           </div>
@@ -340,9 +348,9 @@ export default function CalendarioPage({ theme, toggleTheme }) {
           <div>
             <div className="kpi-label">Catedráticos Asignados</div>
             <div className="kpi-value">
-              {new Set(horarios.map(h => h.catedratico_id)).size}
+              {isDocente && docenteViewMode === "personal" ? (myCatId ? 1 : 0) : new Set(filteredHorarios.map(h => h.catedratico_id)).size}
             </div>
-            <div className="kpi-subtext">Profesores con carga horaria</div>
+            <div className="kpi-subtext">{isDocente && docenteViewMode === "personal" ? "Tu perfil docente activo" : "Profesores con carga horaria"}</div>
           </div>
         </div>
 
@@ -413,20 +421,27 @@ export default function CalendarioPage({ theme, toggleTheme }) {
           </select>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
-          <Users style={{ width: "16px", color: "var(--primary)" }} />
-          <select 
-            className="form-select" 
-            style={{ minWidth: "200px" }}
-            value={filterCat}
-            onChange={(e) => setFilterCat(e.target.value)}
-          >
-            <option value="">-- Todos los Catedráticos --</option>
-            {catedraticos.map((c) => (
-              <option key={c.id} value={c.id}>{c.nombre}</option>
-            ))}
-          </select>
-        </div>
+        {isDocente && docenteViewMode === "personal" ? (
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", background: "rgba(16, 185, 129, 0.12)", border: "1px solid rgba(16, 185, 129, 0.3)", padding: "0.4rem 0.8rem", borderRadius: "var(--radius-sm)", color: "#10b981", fontSize: "0.85rem", fontWeight: "600" }}>
+            <Users style={{ width: "16px" }} />
+            <span>Perfil: {user?.nombre || "Docente Logueado"}</span>
+          </div>
+        ) : (
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+            <Users style={{ width: "16px", color: "var(--primary)" }} />
+            <select 
+              className="form-select" 
+              style={{ minWidth: "200px" }}
+              value={filterCat}
+              onChange={(e) => setFilterCat(e.target.value)}
+            >
+              <option value="">-- Todos los Catedráticos --</option>
+              {catedraticos.map((c) => (
+                <option key={c.id} value={c.id}>{c.nombre}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {(filterAula || filterCat) && (
           <button 
