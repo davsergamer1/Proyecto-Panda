@@ -65,15 +65,20 @@ export default function CalendarioPage({ theme, toggleTheme }) {
   const [solverResult, setSolverResult] = useState(null);
   const [showQuickModal, setShowQuickModal] = useState(false);
 
-  // Filters
+  // Filters & View Modes
+  const [docenteViewMode, setDocenteViewMode] = useState("personal"); // 'personal' | 'general'
   const [filterAula, setFilterAula] = useState("");
   const [filterCat, setFilterCat] = useState("");
 
   useEffect(() => {
     if (isDocente && user?.catedratico_id) {
-      setFilterCat(user.catedratico_id);
+      if (docenteViewMode === "personal") {
+        setFilterCat(user.catedratico_id);
+      } else {
+        setFilterCat("");
+      }
     }
-  }, [isDocente, user]);
+  }, [isDocente, user, docenteViewMode]);
 
   const loadData = async () => {
     try {
@@ -168,8 +173,19 @@ export default function CalendarioPage({ theme, toggleTheme }) {
           )}
 
           {isDocente ? (
-            <div style={{ padding: "0.5rem 1rem", borderRadius: "var(--radius-md)", background: "rgba(217, 119, 6, 0.15)", border: "1px solid rgba(217, 119, 6, 0.3)", color: "var(--accent)", fontWeight: "700", fontSize: "0.88rem" }}>
-              👨‍🏫 Mi Horario Catedrático Personal ({user?.nombre})
+            <div style={{ display: "flex", gap: "0.5rem", background: "var(--table-header-bg)", padding: "4px", borderRadius: "var(--radius-md)", border: "1px solid var(--border-color)" }}>
+              <button
+                className={`btn btn-sm ${docenteViewMode === "personal" ? "btn-primary" : "btn-secondary"}`}
+                onClick={() => setDocenteViewMode("personal")}
+              >
+                📌 Mi Horario Personal
+              </button>
+              <button
+                className={`btn btn-sm ${docenteViewMode === "general" ? "btn-primary" : "btn-secondary"}`}
+                onClick={() => setDocenteViewMode("general")}
+              >
+                🌐 Horario General y Aulas
+              </button>
             </div>
           ) : (
             <>
@@ -341,10 +357,10 @@ export default function CalendarioPage({ theme, toggleTheme }) {
           </select>
         </div>
 
-        {(filterAula || filterCat) && (
+        {(filterAula || (filterCat && (!isDocente || docenteViewMode === "general"))) && (
           <button 
             className="btn btn-secondary btn-sm" 
-            onClick={() => { setFilterAula(""); setFilterCat(""); }}
+            onClick={() => { setFilterAula(""); setFilterCat(isDocente && docenteViewMode === "personal" ? user?.catedratico_id : ""); }}
           >
             Limpiar Filtros
           </button>
@@ -396,43 +412,53 @@ export default function CalendarioPage({ theme, toggleTheme }) {
                           borderRadius: "var(--radius-sm)"
                         }}
                       >
-                        {matches.map((item) => {
-                          const courseName = item.secciones?.cursos?.nombre || "Curso";
-                          const catName = item.catedraticos?.nombre || "Catedrático";
-                          const aulaName = item.aulas?.nombre || "Aula";
-                          const color = getCourseColor(courseName);
-                          const tieneCanonera = item.aulas?.tiene_canonera;
-                          const tieneEscritorio = item.aulas?.tiene_escritorio;
+                        {matches.length === 0 ? (
+                          <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)", fontSize: "0.72rem", opacity: 0.4 }}>
+                            🟢 Libre
+                          </div>
+                        ) : (
+                          matches.map((item) => {
+                            const courseName = item.secciones?.cursos?.nombre || "Curso";
+                            const catName = item.catedraticos?.nombre || "Catedrático";
+                            const aulaName = item.aulas?.nombre || "Aula";
+                            const color = getCourseColor(courseName);
+                            const tieneCanonera = item.aulas?.tiene_canonera;
+                            const tieneEscritorio = item.aulas?.tiene_escritorio;
+                            const esMiClase = isDocente && user?.catedratico_id === item.catedratico_id;
 
-                          return (
-                            <div 
-                              key={item.id} 
-                              style={{
-                                background: color.bg,
-                                borderLeft: `4px solid ${color.border}`,
-                                borderRadius: "6px",
-                                padding: "6px 8px",
-                                marginBottom: "4px",
-                                fontSize: "0.75rem",
-                                boxShadow: "0 2px 8px rgba(0,0,0,0.2)"
-                              }}
-                            >
-                              <div style={{ fontWeight: "700", color: color.text, marginBottom: "2px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                <span>{courseName}</span>
-                                <div style={{ display: "flex", gap: "3px", fontSize: "0.7rem" }}>
-                                  {tieneCanonera && <span title="Aula con Proyector / Cañonera">📹</span>}
-                                  {tieneEscritorio && <span title="Aula con Escritorio">🪑</span>}
+                            return (
+                              <div 
+                                key={item.id} 
+                                style={{
+                                  background: esMiClase ? "rgba(16, 185, 129, 0.18)" : color.bg,
+                                  borderLeft: esMiClase ? "4px solid #10b981" : `4px solid ${color.border}`,
+                                  borderRadius: "6px",
+                                  padding: "6px 8px",
+                                  marginBottom: "4px",
+                                  fontSize: "0.75rem",
+                                  boxShadow: esMiClase ? "0 2px 10px rgba(16, 185, 129, 0.3)" : "0 2px 8px rgba(0,0,0,0.2)"
+                                }}
+                              >
+                                <div style={{ fontWeight: "700", color: esMiClase ? "#10b981" : color.text, marginBottom: "2px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                  <span>{courseName} {esMiClase && "⭐"}</span>
+                                  <div style={{ display: "flex", gap: "3px", fontSize: "0.7rem" }}>
+                                    {tieneCanonera && <span title="Aula con Proyector / Cañonera">📹</span>}
+                                    {tieneEscritorio && <span title="Aula con Escritorio">🪑</span>}
+                                  </div>
+                                </div>
+                                <div style={{ color: "var(--text-main)", opacity: 0.9, fontSize: "0.72rem" }}>
+                                  👨‍🏫 {catName} {esMiClase ? "(Tú)" : ""}
+                                </div>
+                                <div style={{ color: "var(--text-muted)", fontSize: "0.7rem", marginTop: "2px", display: "flex", justifyContent: "space-between" }}>
+                                  <span>🏫 {aulaName}</span>
+                                  <span style={{ fontSize: "0.68rem", fontWeight: "700", color: esMiClase ? "#10b981" : "var(--danger)" }}>
+                                    {esMiClase ? "Tu Clase" : "🔴 Ocupado"}
+                                  </span>
                                 </div>
                               </div>
-                              <div style={{ color: "var(--text-main)", opacity: 0.9 }}>
-                                👨‍🏫 {catName}
-                              </div>
-                              <div style={{ color: "var(--text-muted)", fontSize: "0.7rem", marginTop: "2px" }}>
-                                🏫 {aulaName}
-                              </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          })
+                        )}
                       </td>
                     );
                   })}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../services/api";
-import { GraduationCap, Shield, Users, Key, LogIn, UserPlus, AlertCircle, CheckCircle } from "lucide-react";
+import { GraduationCap, Shield, Users, Key, LogIn, UserPlus, AlertCircle, CheckCircle, Lock } from "lucide-react";
 
 export default function LoginModal({ isOpen, onClose }) {
   const { login, register } = useAuth();
@@ -30,6 +30,15 @@ export default function LoginModal({ isOpen, onClose }) {
     }
   }, [isOpen]);
 
+  // Si cambia a modo registro, forzar rol docente
+  const handleSwitchMode = (newMode) => {
+    setMode(newMode);
+    setErrorMsg("");
+    if (newMode === "register") {
+      setRoleTab("docente");
+    }
+  };
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
@@ -51,10 +60,10 @@ export default function LoginModal({ isOpen, onClose }) {
           nombre,
           email,
           password,
-          rol: roleTab,
-          catedratico_id: roleTab === "docente" ? selectedCatId : null
+          rol: "docente",
+          catedratico_id: selectedCatId || null
         });
-        setSuccessMsg("¡Cuenta creada exitosamente!");
+        setSuccessMsg("¡Cuenta de Docente registrada exitosamente!");
         setTimeout(() => {
           onClose && onClose();
         }, 500);
@@ -104,7 +113,7 @@ export default function LoginModal({ isOpen, onClose }) {
         <div style={{ display: "flex", background: "var(--table-header-bg)", borderBottom: "1px solid var(--border-color)", padding: "4px" }}>
           <button
             type="button"
-            onClick={() => { setMode("login"); setErrorMsg(""); }}
+            onClick={() => handleSwitchMode("login")}
             style={{
               flex: 1,
               padding: "0.5rem",
@@ -122,7 +131,7 @@ export default function LoginModal({ isOpen, onClose }) {
           </button>
           <button
             type="button"
-            onClick={() => { setMode("register"); setErrorMsg(""); }}
+            onClick={() => handleSwitchMode("register")}
             style={{
               flex: 1,
               padding: "0.5rem",
@@ -136,57 +145,64 @@ export default function LoginModal({ isOpen, onClose }) {
               boxShadow: mode === "register" ? "0 2px 4px rgba(0,0,0,0.05)" : "none"
             }}
           >
-            📝 Registrarse
+            📝 Registro Docente
           </button>
         </div>
 
-        {/* Role Selector Tabs */}
-        <div style={{ display: "flex", borderBottom: "1px solid var(--border-color)" }}>
-          <button
-            type="button"
-            onClick={() => setRoleTab("admin")}
-            style={{
-              flex: 1,
-              padding: "0.7rem",
-              border: "none",
-              background: roleTab === "admin" ? "var(--bg-card)" : "var(--table-header-bg)",
-              color: roleTab === "admin" ? "var(--primary)" : "var(--text-muted)",
-              fontWeight: roleTab === "admin" ? "700" : "500",
-              fontSize: "0.83rem",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "0.4rem",
-              borderBottom: roleTab === "admin" ? "2px solid var(--primary)" : "2px solid transparent"
-            }}
-          >
-            <Shield style={{ width: "15px" }} />
-            Administrador
-          </button>
-          <button
-            type="button"
-            onClick={() => setRoleTab("docente")}
-            style={{
-              flex: 1,
-              padding: "0.7rem",
-              border: "none",
-              background: roleTab === "docente" ? "var(--bg-card)" : "var(--table-header-bg)",
-              color: roleTab === "docente" ? "var(--accent)" : "var(--text-muted)",
-              fontWeight: roleTab === "docente" ? "700" : "500",
-              fontSize: "0.83rem",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "0.4rem",
-              borderBottom: roleTab === "docente" ? "2px solid var(--accent)" : "2px solid transparent"
-            }}
-          >
-            <Users style={{ width: "15px" }} />
-            Catedrático Docente
-          </button>
-        </div>
+        {/* Role Selector Tabs (Only active/visible in Login mode) */}
+        {mode === "login" ? (
+          <div style={{ display: "flex", borderBottom: "1px solid var(--border-color)" }}>
+            <button
+              type="button"
+              onClick={() => setRoleTab("admin")}
+              style={{
+                flex: 1,
+                padding: "0.7rem",
+                border: "none",
+                background: roleTab === "admin" ? "var(--bg-card)" : "var(--table-header-bg)",
+                color: roleTab === "admin" ? "var(--primary)" : "var(--text-muted)",
+                fontWeight: roleTab === "admin" ? "700" : "500",
+                fontSize: "0.83rem",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "0.4rem",
+                borderBottom: roleTab === "admin" ? "2px solid var(--primary)" : "2px solid transparent"
+              }}
+            >
+              <Shield style={{ width: "15px" }} />
+              Administrador
+            </button>
+            <button
+              type="button"
+              onClick={() => setRoleTab("docente")}
+              style={{
+                flex: 1,
+                padding: "0.7rem",
+                border: "none",
+                background: roleTab === "docente" ? "var(--bg-card)" : "var(--table-header-bg)",
+                color: roleTab === "docente" ? "var(--accent)" : "var(--text-muted)",
+                fontWeight: roleTab === "docente" ? "700" : "500",
+                fontSize: "0.83rem",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "0.4rem",
+                borderBottom: roleTab === "docente" ? "2px solid var(--accent)" : "2px solid transparent"
+              }}
+            >
+              <Users style={{ width: "15px" }} />
+              Catedrático Docente
+            </button>
+          </div>
+        ) : (
+          <div style={{ padding: "0.5rem 1rem", background: "rgba(29, 78, 216, 0.08)", borderBottom: "1px solid var(--border-color)", fontSize: "0.78rem", color: "var(--text-muted)", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+            <Lock style={{ width: "14px", color: "var(--primary)" }} />
+            <span>Registro de nuevo Catedrático. Cuentas de Administrador solo son creadas por Coordinación.</span>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           <div className="modal-body" style={{ padding: "1.25rem 1.5rem" }}>
@@ -204,7 +220,7 @@ export default function LoginModal({ isOpen, onClose }) {
 
             {mode === "register" && (
               <div className="form-group" style={{ marginBottom: "0.85rem" }}>
-                <label className="form-label" style={{ fontSize: "0.8rem", marginBottom: "0.25rem" }}>Nombre Completo</label>
+                <label className="form-label" style={{ fontSize: "0.8rem", marginBottom: "0.25rem" }}>Nombre Completo del Catedrático</label>
                 <input
                   type="text"
                   className="form-input"
@@ -218,12 +234,12 @@ export default function LoginModal({ isOpen, onClose }) {
 
             <div className="form-group" style={{ marginBottom: "0.85rem" }}>
               <label className="form-label" style={{ fontSize: "0.8rem", marginBottom: "0.25rem" }}>
-                Correo Electrónico {roleTab === "admin" ? "(Administración UMG)" : "(Docente)"}
+                Correo Electrónico {roleTab === "admin" && mode === "login" ? "(Administración UMG)" : "(Docente)"}
               </label>
               <input
                 type="email"
                 className="form-input"
-                placeholder={roleTab === "admin" ? "admin@umg.edu.gt" : "catedratico@umg.edu.gt"}
+                placeholder={roleTab === "admin" && mode === "login" ? "admin@umg.edu.gt" : "catedratico@umg.edu.gt"}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required={mode === "register" || roleTab === "admin"}
@@ -242,15 +258,15 @@ export default function LoginModal({ isOpen, onClose }) {
               />
             </div>
 
-            {roleTab === "docente" && (
+            {(roleTab === "docente" || mode === "register") && (
               <div className="form-group" style={{ marginBottom: "0.85rem" }}>
-                <label className="form-label" style={{ fontSize: "0.8rem", marginBottom: "0.25rem" }}>Vincular a Catedrático Registrado</label>
+                <label className="form-label" style={{ fontSize: "0.8rem", marginBottom: "0.25rem" }}>Vincular a Catedrático Registrado (Opcional)</label>
                 <select
                   className="form-select"
                   value={selectedCatId}
                   onChange={(e) => setSelectedCatId(e.target.value)}
                 >
-                  <option value="">-- Seleccionar Catedrático --</option>
+                  <option value="">-- Registrar Nuevo Catedrático Automáticamente --</option>
                   {catedraticos.map((c) => (
                     <option key={c.id} value={c.id}>
                       👨‍🏫 {c.nombre}
@@ -266,7 +282,7 @@ export default function LoginModal({ isOpen, onClose }) {
               {mode === "register" ? (
                 <>
                   <UserPlus style={{ width: "18px" }} />
-                  {loading ? "Registrando..." : `Crear Cuenta de ${roleTab === "admin" ? "Administrador" : "Docente"}`}
+                  {loading ? "Registrando..." : "Crear Cuenta Docente"}
                 </>
               ) : (
                 <>
@@ -281,4 +297,5 @@ export default function LoginModal({ isOpen, onClose }) {
     </div>
   );
 }
+
 
